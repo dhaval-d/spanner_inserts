@@ -8,7 +8,6 @@ from random import random
 from google.cloud import spanner
 
 
-
 # This class represents a sample record for a spanner table. I have included columns with all data types.
 class ContentRecord(object):
     # Initialize a class
@@ -56,7 +55,7 @@ class ContentRecord(object):
 # IDs for newly created records.
 def generate_records_batch(batch_id):
     new_batch = []
-    batch_size = 10
+    batch_size = 1000
     counter = 0
     file_name = "file_"+str(batch_id)
 
@@ -78,7 +77,7 @@ def generate_records_batch(batch_id):
 # Inserts sample data into the given database.
 # The database and table must already exist and can be created using
 # `create_database`.
-def insert_data(instance_id, database_id, spanner_client, batch_id):
+def insert_data(instance_id, database_id, spanner_client, batch_id,values):
     instance = spanner_client.instance(instance_id)
     database = instance.database(database_id)
 
@@ -96,10 +95,9 @@ def insert_data(instance_id, database_id, spanner_client, batch_id):
                      'date_field1',
                      'date_field2',
                      'array_field',
-                     'bool_field'
-                     ,'bytes_field'),
-            values=generate_records_batch(batch_id))
-    print('Inserted data.')
+                     'bool_field',
+                     'bytes_field'),
+            values=values)
 
 
 # main method to run application
@@ -109,10 +107,16 @@ def main():
     counter = 0
     spanner_client = spanner.Client()
     # This loop will run 1000 batches with 1000 entries each resulting in 1 million records
-    while counter < 1:
+    # I am inserting records into two different instances because I am trying to validate performance afterwards.
+    while counter < 1000:
+        values = generate_records_batch(counter)
         start_time = time.time()
-        insert_data(instance_id='instance-1', database_id='db1', spanner_client=spanner_client, batch_id=counter)
-        print 'Batch '+str(counter)+' finished. Elapsed time : '+str(time.time()-start_time)
+        insert_data(instance_id='instance-1', database_id='db1', spanner_client=spanner_client, batch_id=counter, values=values)
+        print 'Instance 1: Batch '+str(counter)+' finished. Elapsed time : '+str(time.time()-start_time)
+        # reset timer
+        start_time = time.time()
+        insert_data(instance_id='instance-2', database_id='db2', spanner_client=spanner_client, batch_id=counter, values=values)
+        print 'Instance 2: Batch '+str(counter)+' finished. Elapsed time : '+str(time.time()-start_time)
         counter += 1
     print 'End'
 
