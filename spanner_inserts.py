@@ -101,21 +101,17 @@ def generate_persons():
     persons_batch = []
     batch_size = 1000
     counter = 0
-    # file_name = "file_"+str(batch_id)
 
-    # f = open(file_name,'w+')
     try:
         while counter < batch_size:
             new_person = Person()
-            # f.write(new_obj.person_id)
-            # f.write('\n')
+
             persons.append(new_person.person_id)
             persons_batch.append(new_person.return_tup())
             counter += 1
     except IOError:
         print 'Issues in writing file'
     finally:
-        # f.close()
         print ''
     return persons_batch
 
@@ -128,12 +124,10 @@ def generate_friends(friend_count):
     # for each person, create random number of friends
     for person in persons:
         top = randint(0,friend_count)
-
         while counter < top:
             # create a new friend object and add it to batch
             new_friend = Friend(person)
             friends_batch.append(new_friend.return_tup())
-
             # Just append as a comma separated string so that it can be parsed quickly when reading from file
             friends.append(person + "," + new_friend.friend_id)
             counter += 1
@@ -153,11 +147,11 @@ def generate_activities(activity_count):
             # create a new friend object and add it to batch
             new_activity = Activity(person)
             activities_batch.append(new_activity.return_tup())
-
             # Just append as a comma separated string so that it can be parsed quickly when reading from file
             activities.append(person + "," + new_activity.activity_id)
             counter += 1
     return activities_batch
+
 
 # This method generates a list of posts for a given post and activity
 def generate_posts(post_count):
@@ -180,19 +174,44 @@ def generate_posts(post_count):
 
 
 # Inserts sample data into the given database.
-# The database and table must already exist and can be created using
-# `create_database`.
+# The database and table must already exist and can be created using `create_database`.
 def insert_data(instance_id, database_id, spanner_client, table_id, columns, values):
     instance = spanner_client.instance(instance_id)
     database = instance.database(database_id)
 
     with database.batch() as batch:
-        batch.insert(
-            table=table_id,
-            columns=('person_id', 'update_timestamp', 'firstname', 'lastname', 'sibling_count', 'child_count',
-                     'base_salary', 'bonus', 'birthdate', 'account_creation_date',
-                     'given_names', 'is_active', 'profile_picture'),
-            values=values)
+        batch.insert(table=table_id, columns=columns, values=values)
+
+
+# dump Ids in key files for further querying
+def create_key_files():
+    file_name = "players"
+    f = open(file_name,'w+')
+    for person in persons:
+        f.write(person)
+        f.write('\n')
+    f.close()
+
+    file_name = "friends"
+    f = open(file_name, 'w+')
+    for friend in friends:
+        f.write(friend)
+        f.write('\n')
+    f.close()
+
+    file_name = "activities"
+    f = open(file_name, 'w+')
+    for activity in activities:
+        f.write(activity)
+        f.write('\n')
+    f.close()
+
+    file_name = "posts"
+    f = open(file_name, 'w+')
+    for post in posts:
+        f.write(post)
+        f.write('\n')
+    f.close()
 
 
 # following lists keep a list of generated ids for each table. I will dump them in separate files
@@ -257,6 +276,8 @@ def main():
                 table_id="Posts",
                 columns=('person_id', 'activity_id', 'post_id', 'post_content', 'post_timestamp'),
                 values=posts_batch)
+
+    create_key_files()
 
     print 'End'
 
