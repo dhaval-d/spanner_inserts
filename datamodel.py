@@ -5,6 +5,7 @@ import base64
 from random import randint
 from random import random
 
+
 # PLEASE NOTE: Goal of this app is not to demonstrate Python object model. I want to spend time on actually
 # building a tool that can ingest reasonable sample data into Spanner database.
 # This class represents a Person record for a spanner table. I have included columns with all data types.
