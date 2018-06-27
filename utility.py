@@ -1,4 +1,4 @@
-import dataobjects
+import datamodel
 from random import randint
 
 # following lists keep a list of generated ids for each table. I will dump them in separate files
@@ -15,7 +15,7 @@ def generate_persons(size):
     counter = 0
     try:
         while counter < size:
-            new_person = dataobjects.Person()
+            new_person = datamodel.Person()
             persons.append(new_person.person_id)
             persons_batch.append(new_person.return_tup())
             counter += 1
@@ -35,7 +35,7 @@ def generate_friends(friend_count):
         top = randint(0,friend_count)
         while counter < top:
             # create a new friend object and add it to batch
-            new_friend = dataobjects.Friend(person)
+            new_friend = datamodel.Friend(person)
             friends_batch.append(new_friend.return_tup())
             # Just append as a comma separated string so that it can be parsed quickly when reading from file
             friends.append(person + "," + new_friend.friend_id)
@@ -56,7 +56,7 @@ def generate_activities(activity_count):
 
         while counter < top:
             # create a new friend object and add it to batch
-            new_activity = dataobjects.Activity(person)
+            new_activity = datamodel.Activity(person)
             activities_batch.append(new_activity.return_tup())
             # Just append as a comma separated string so that it can be parsed quickly when reading from file
             activities.append(person + "," + new_activity.activity_id)
@@ -77,7 +77,7 @@ def generate_posts(post_count):
         splits = activity.split(',')
         while counter < top:
             # create a new friend object and add it to batch
-            new_post = dataobjects.Post(splits[0],splits[1])
+            new_post = datamodel.Post(splits[0], splits[1])
             posts_batch.append(new_post.return_tup())
 
             # Just append as a comma separated string so that it can be parsed quickly when reading from file
@@ -120,7 +120,7 @@ def insert_data(instance_id, database_id, spanner_client, table_id, columns, val
 # dump Ids in key files for further querying
 def create_key_files():
     file_name = "players"
-    f = open(file_name,'w+')
+    f = open(file_name, 'w+')
     for person in persons:
         f.write(person)
         f.write('\n')

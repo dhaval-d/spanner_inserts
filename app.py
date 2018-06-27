@@ -15,13 +15,13 @@ def main(instance, database, size):
     start_time = time.time()
     # Insert into Persons table
     utility.insert_data(instance_id=instance,
-                database_id=database,
-                spanner_client=spanner_client,
-                table_id="Persons",
-                columns=('person_id', 'update_timestamp', 'firstname', 'lastname', 'sibling_count', 'child_count',
-                         'height', 'weight', 'birthdate', 'account_creation_date', 'given_names', 'is_active',
-                         'profile_picture'),
-                values=persons_batch)
+                        database_id=database,
+                        spanner_client=spanner_client,
+                        table_id="Persons",
+                        columns=('person_id', 'update_timestamp', 'firstname', 'lastname', 'sibling_count'
+                                 , 'child_count', 'height', 'weight', 'birthdate', 'account_creation_date',
+                                 'given_names', 'is_active', 'profile_picture'),
+                        values=persons_batch)
     print 'Persons upload finished. Elapsed time : ' + str(time.time() - start_time)
 
     # generate friends for each person with max friends = 15
@@ -31,11 +31,11 @@ def main(instance, database, size):
     start_time = time.time()
     # Insert into friends table
     utility.insert_data(instance_id=instance,
-                database_id=database,
-                spanner_client=spanner_client,
-                table_id="Friends",
-                columns=('person_id', 'friend_id', 'status', 'connection_date'),
-                values=friends_batch)
+                        database_id=database,
+                        spanner_client=spanner_client,
+                        table_id="Friends",
+                        columns=('person_id', 'friend_id', 'status', 'connection_date'),
+                        values=friends_batch)
     print 'Friends upload finished. Elapsed time : ' + str(time.time() - start_time)
 
     # generate activities for each person with max activity_type = 10
@@ -44,11 +44,11 @@ def main(instance, database, size):
     start_time = time.time()
     # Insert into Activities table
     utility.insert_data(instance_id=instance,
-                database_id=database,
-                spanner_client=spanner_client,
-                table_id="Activities",
-                columns=('person_id', 'activity_id', 'activity_type'),
-                values=activities_batch)
+                        database_id=database,
+                        spanner_client=spanner_client,
+                        table_id="Activities",
+                        columns=('person_id', 'activity_id', 'activity_type'),
+                        values=activities_batch)
     print 'Activities upload finished. Elapsed time : ' + str(time.time() - start_time)
 
     # generate posts for each person and activity
@@ -57,11 +57,11 @@ def main(instance, database, size):
     start_time = time.time()
     # Insert into Posts table
     utility.insert_data(instance_id=instance,
-                database_id=database,
-                spanner_client=spanner_client,
-                table_id="Posts",
-                columns=('person_id', 'activity_id', 'post_id', 'post_content', 'post_timestamp'),
-                values=posts_batch)
+                        database_id=database,
+                        spanner_client=spanner_client,
+                        table_id="Posts",
+                        columns=('person_id', 'activity_id', 'post_id', 'post_content', 'post_timestamp'),
+                        values=posts_batch)
     print 'Posts upload finished. Elapsed time : ' + str(time.time() - start_time)
 
     utility.create_key_files()
