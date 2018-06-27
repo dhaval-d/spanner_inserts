@@ -7,11 +7,6 @@ friends = []
 activities = []
 posts = []
 
-# Spanner objects
-instance = None
-database = None
-
-
 # Create a batch of records for Spanner batch input. This method also creates a separate file to store
 # IDs for newly created records.
 def generate_persons(size):
@@ -99,8 +94,11 @@ def init_spanner(instance_id, database_id, spanner_client):
 
 # Inserts sample data into the given database.
 # The database and table must already exist and can be created using `create_database`.
-def insert_data(table_id, columns, values):
+def insert_data(instance_id,database_id,spanner_client,table_id, columns, values):
+    instance = spanner_client.instance(instance_id)
+    database = instance.database(database_id)
     load_size = len(values)
+
     # for smaller collections, just insert in one batch
     if load_size <= 1000:
         with database.batch() as batch:
