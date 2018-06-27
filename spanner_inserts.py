@@ -1,287 +1,82 @@
-import uuid
+import utility
 import time
-import datetime
-import zulu
-import base64
-from random import randint
-from random import random
+import argparse
 from google.cloud import spanner
 
-
-# This class represents a Person record for a spanner table. I have included columns with all data types.
-class Person(object):
-    # Initialize a class
-    def __init__(self):
-        right_now = zulu.now()
-        dt = zulu.parse(right_now)
-
-        # string field
-        self.person_id = str(uuid.uuid4())
-        # timestamp
-        self.update_timestamp = right_now
-        # string fields
-        self.firstname = 'string  ' + str(int(dt.timestamp()*100000%100))
-        self.lastname = 'string  ' + str(int(dt.timestamp()*100000%99))
-        #int fields
-        self.sibling_count = randint(0,4)
-        self.child_count = randint(0,4)
-        #float fields
-        self.height = random()
-        self.weight = random()
-        # date fields
-        self.birthdate = datetime.date.today()
-        self.account_creation_date = datetime.date.today()
-        # array field
-        self.given_names = [self.string_field1,self.string_field2]
-        # bool field
-        self.is_active = randint(0, 10) % 2 == 0
-        # byte field
-        self.profile_picture = base64.b64encode(self.person_id.encode('utf-8'))
-
-    # return a tuple containing all the fields
-    def return_tup(self):
-        return (self.person_id, self.update_timestamp, self.firstname, self.lastname, self.sibling_count,
-                self.child_count, self.height, self.weight, self.birthdate, self.account_creation_date,
-                self.given_names, self.is_active, self.profile_picture
-                )
-
-    # Print a record
-    def print_record(self):
-        print self.return_tup()
-
-
-# This class represents a Friend record for a spanner table.
-class Friend(object):
-    # Initialize a class
-    def __init__(self, person_id):
-        self.person_id = person_id
-        # assign a friend id from person list
-        # I am not checking if person and friend ids are same or no
-        self.friend_id = persons[randint(0,len(persons))]
-        self.status = ["Friends", "Invitation Sent", "Invitation Received", "Blocked"][randint(0, 10) % 4]
-        self.connection_date = datetime.date.today()
-
-    # return a tuple containing all the fields
-    def return_tup(self):
-        return self.person_id, self.friend_id, self.status, self.connection_date
-
-
-# This class represents Activity record for a spanner table
-class Activity(object):
-    # Initialize a class
-    def __init__(self, person_id):
-        self.person_id = person_id
-        self.activity_id =  str(uuid.uuid4())
-        # type of activity
-        # let's assume type = 3 is posts
-        self.activity_type = 3
-
-    # return a tuple containing all the fields
-    def return_tup(self):
-        return self.person_id, self.activity_id, self.activity_type
-
-
-# This class represents Post activity record for a spanner table
-class Post(object):
-    def __init__(self, person_id, activity_id):
-        self.person_id = person_id
-        self.activity_id = activity_id
-        self.post_id = str(uuid.uuid4())
-        self.post_content = base64.b64encode(self.person_id.encode('utf-8'))
-        self.post_timestamp = zulu.now()
-
-    # return a tuple containing all fields
-    def return_tup(self):
-        return self.person_id, self.activity_id, self.post_id, self.post_content, self.post_timestamp
-
-
-# Create a batch of records for Spanner batch input. This method also creates a separate file to store
-# IDs for newly created records.
-def generate_persons():
-    persons_batch = []
-    batch_size = 1000
-    counter = 0
-
-    try:
-        while counter < batch_size:
-            new_person = Person()
-
-            persons.append(new_person.person_id)
-            persons_batch.append(new_person.return_tup())
-            counter += 1
-    except IOError:
-        print 'Issues in writing file'
-    finally:
-        print ''
-    return persons_batch
-
-
-# This method generates a list of friends for the person
-def generate_friends(friend_count):
-    counter = 0
-    friends_batch = []
-
-    # for each person, create random number of friends
-    for person in persons:
-        top = randint(0,friend_count)
-        while counter < top:
-            # create a new friend object and add it to batch
-            new_friend = Friend(person)
-            friends_batch.append(new_friend.return_tup())
-            # Just append as a comma separated string so that it can be parsed quickly when reading from file
-            friends.append(person + "," + new_friend.friend_id)
-            counter += 1
-    return friends_batch
-
-
-# This method generates a list of activities performed by person
-def generate_activities(activity_count):
-    counter = 0
-    activities_batch = []
-
-    # for each person, create random number of friends
-    for person in persons:
-        top = randint(0, activity_count)
-
-        while counter < top:
-            # create a new friend object and add it to batch
-            new_activity = Activity(person)
-            activities_batch.append(new_activity.return_tup())
-            # Just append as a comma separated string so that it can be parsed quickly when reading from file
-            activities.append(person + "," + new_activity.activity_id)
-            counter += 1
-    return activities_batch
-
-
-# This method generates a list of posts for a given post and activity
-def generate_posts(post_count):
-    counter = 0
-    posts_batch = []
-
-    # for each person, create random number of friends
-    for person in persons:
-        top = randint(0, post_count)
-
-        while counter < top:
-            # create a new friend object and add it to batch
-            new_post = Post(person)
-            posts_batch.append(new_post.return_tup())
-
-            # Just append as a comma separated string so that it can be parsed quickly when reading from file
-            activities.append(person + "," + new_post.activity_id + "," + new_post.post_id)
-            counter += 1
-    return posts_batch
-
-
-# Inserts sample data into the given database.
-# The database and table must already exist and can be created using `create_database`.
-def insert_data(instance_id, database_id, spanner_client, table_id, columns, values):
-    instance = spanner_client.instance(instance_id)
-    database = instance.database(database_id)
-
-    with database.batch() as batch:
-        batch.insert(table=table_id, columns=columns, values=values)
-
-
-# dump Ids in key files for further querying
-def create_key_files():
-    file_name = "players"
-    f = open(file_name,'w+')
-    for person in persons:
-        f.write(person)
-        f.write('\n')
-    f.close()
-
-    file_name = "friends"
-    f = open(file_name, 'w+')
-    for friend in friends:
-        f.write(friend)
-        f.write('\n')
-    f.close()
-
-    file_name = "activities"
-    f = open(file_name, 'w+')
-    for activity in activities:
-        f.write(activity)
-        f.write('\n')
-    f.close()
-
-    file_name = "posts"
-    f = open(file_name, 'w+')
-    for post in posts:
-        f.write(post)
-        f.write('\n')
-    f.close()
-
-
-# following lists keep a list of generated ids for each table. I will dump them in separate files
-persons = []
-friends = []
-activities = []
-posts = []
-
-
 # main method to run application
-def main():
+def main(instance, database, size):
     print 'Start'
-
-    counter = 0
     spanner_client = spanner.Client()
     # This loop will run 1000 batches with 1000 entries each resulting in 1 million records
     # I am inserting records into two different instances because I am trying to validate performance afterwards.
-    while counter < 1000:
-        persons_batch = generate_persons()
+    persons_batch = utility.generate_persons(size)
+    print 'persons_batch record count : ' + str(len(persons_batch))
 
-        start_time = time.time()
+    start_time = time.time()
+    # Insert into Persons table
+    utility.insert_data(instance_id=instance,
+                database_id=database,
+                spanner_client=spanner_client,
+                table_id="Persons",
+                columns=('person_id', 'update_timestamp', 'firstname', 'lastname', 'sibling_count', 'child_count',
+                         'height', 'weight', 'birthdate', 'account_creation_date', 'given_names', 'is_active',
+                         'profile_picture'),
+                values=persons_batch)
+    print 'Persons upload finished. Elapsed time : ' + str(time.time() - start_time)
 
-        # Insert into Persons table
-        insert_data(instance_id='instance-1',
-                    database_id='db1',
-                    spanner_client=spanner_client,
-                    table_id="Persons",
-                    columns=('person_id', 'update_timestamp', 'firstname', 'lastname', 'sibling_count', 'child_count',
-                             'base_salary', 'bonus', 'birthdate', 'account_creation_date', 'given_names', 'is_active',
-                             'profile_picture'),
-                    values=persons_batch)
-        print 'Instance 1: Batch' \
-              ' ' + str(counter) + ' finished. Elapsed time : ' + str(time.time() - start_time)
-        counter += 1
+    # generate friends for each person with max friends = 15
+    friends_batch = utility.generate_friends(15)
+    print 'friends_batch record count : ' + str(len(friends_batch))
 
-    # generate friends for each person with max friends = 100
-    friends_batch = generate_friends(15)
+    start_time = time.time()
     # Insert into friends table
-    insert_data(instance_id='instance-1',
-                database_id='db1',
+    utility.insert_data(instance_id=instance,
+                database_id=database,
                 spanner_client=spanner_client,
                 table_id="Friends",
                 columns=('person_id', 'friend_id', 'status', 'connection_date'),
                 values=friends_batch)
+    print 'Friends upload finished. Elapsed time : ' + str(time.time() - start_time)
 
     # generate activities for each person with max activity_type = 10
-    activities_batch = generate_activities(10)
+    activities_batch = utility.generate_activities(10)
+    print 'activities_batch record count : ' + str(len(activities_batch))
+    start_time = time.time()
     # Insert into Activities table
-    insert_data(instance_id='instance-1',
-                database_id='db1',
+    utility.insert_data(instance_id=instance,
+                database_id=database,
                 spanner_client=spanner_client,
                 table_id="Activities",
                 columns=('person_id', 'activity_id', 'activity_type'),
                 values=activities_batch)
+    print 'Activities upload finished. Elapsed time : ' + str(time.time() - start_time)
 
     # generate posts for each person and activity
-    posts_batch = generate_posts(1)
+    posts_batch = utility.generate_posts(1)
+    print 'posts_batch record count : ' + str(len(posts_batch))
+    start_time = time.time()
     # Insert into Posts table
-    insert_data(instance_id='instance-1',
-                database_id='db1',
+    utility.insert_data(instance_id=instance,
+                database_id=database,
                 spanner_client=spanner_client,
                 table_id="Posts",
                 columns=('person_id', 'activity_id', 'post_id', 'post_content', 'post_timestamp'),
                 values=posts_batch)
+    print 'Posts upload finished. Elapsed time : ' + str(time.time() - start_time)
 
-    create_key_files()
+    utility.create_key_files()
+    print 'Key files created'
 
     print 'End'
 
 
 # Start application
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--instance', help='Spanner instance name', required=True)
+    parser.add_argument('-d', '--database', help='Spanner database name', required=True)
+    parser.add_argument('-s', '--size', help='Size of sample records', required=True)
+    args = parser.parse_args()
+    print args
+    print parser
+    main(args.instance, args.database, int(args.size))
