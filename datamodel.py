@@ -5,7 +5,8 @@ import base64
 from random import randint
 from random import random
 
-
+# PLEASE NOTE: Goal of this app is not to demonstrate Python object model. I want to spend time on actually
+# building a tool that can ingest reasonable sample data into Spanner database.
 # This class represents a Person record for a spanner table. I have included columns with all data types.
 class Person(object):
     # Initialize a class
@@ -20,12 +21,12 @@ class Person(object):
         # string fields
         self.firstname = 'fn ' + str(int(dt.timestamp()*100000%100))
         self.lastname = 'ln ' + str(int(dt.timestamp()*100000%99))
-        #int fields
+        # int fields
         self.sibling_count = randint(0,4)
         self.child_count = randint(0,4)
-        #float fields
-        self.height = random(100,250)
-        self.weight = random(100,250)
+        # float fields
+        self.height = random() * 100
+        self.weight = random() * 100
         # date fields
         self.birthdate = datetime.date.today() - datetime.timedelta(days=randint(10000,20000))
         self.account_creation_date = datetime.date.today() - datetime.timedelta(days=randint(1,1000))

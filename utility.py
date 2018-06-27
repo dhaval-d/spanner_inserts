@@ -7,6 +7,10 @@ friends = []
 activities = []
 posts = []
 
+# Spanner objects
+instance = None
+database = None
+
 
 # Create a batch of records for Spanner batch input. This method also creates a separate file to store
 # IDs for newly created records.
@@ -28,7 +32,6 @@ def generate_persons(size):
 def generate_friends(friend_count):
     counter = 0
     friends_batch = []
-    print 'persons record count : ' + str(len(persons))
 
     # for each person, create random number of friends
     for person in persons:
@@ -88,12 +91,15 @@ def generate_posts(post_count):
     return posts_batch
 
 
-# Inserts sample data into the given database.
-# The database and table must already exist and can be created using `create_database`.
-def insert_data(instance_id, database_id, spanner_client, table_id, columns, values):
+# This method initialized spanner objects in utility class
+def init_spanner(instance_id, database_id, spanner_client):
     instance = spanner_client.instance(instance_id)
     database = instance.database(database_id)
 
+
+# Inserts sample data into the given database.
+# The database and table must already exist and can be created using `create_database`.
+def insert_data(table_id, columns, values):
     load_size = len(values)
     # for smaller collections, just insert in one batch
     if load_size <= 1000:
@@ -105,8 +111,6 @@ def insert_data(instance_id, database_id, spanner_client, table_id, columns, val
         stop = 999
 
         while stop <= load_size - 1:
-            print 'start : ' + str(start)
-            print 'stop : '+str(stop)
             with database.batch() as batch:
                 batch.insert(table=table_id, columns=columns, values=values[start:stop+1])
             start += 1000
@@ -119,30 +123,16 @@ def insert_data(instance_id, database_id, spanner_client, table_id, columns, val
 
 # dump Ids in key files for further querying
 def create_key_files():
-    file_name = "players"
-    f = open(file_name, 'w+')
-    for person in persons:
-        f.write(person)
-        f.write('\n')
-    f.close()
+    create_file("persons.out",persons)
+    create_file("friends.out", friends)
+    create_file("activities.out", activities)
+    create_file("posts.out", posts)
 
-    file_name = "friends"
-    f = open(file_name, 'w+')
-    for friend in friends:
-        f.write(friend)
-        f.write('\n')
-    f.close()
 
-    file_name = "activities"
-    f = open(file_name, 'w+')
-    for activity in activities:
-        f.write(activity)
-        f.write('\n')
-    f.close()
-
-    file_name = "posts"
-    f = open(file_name, 'w+')
-    for post in posts:
-        f.write(post)
+# create a file based on parameters
+def create_file(file_name, lst):
+    f = open(file_name, 'w')
+    for item in lst:
+        f.write(item)
         f.write('\n')
     f.close()

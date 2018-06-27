@@ -7,17 +7,18 @@ from google.cloud import spanner
 def main(instance, database, size):
     print 'Start'
     spanner_client = spanner.Client()
+    # initialize spanner connection objects
+    utility.init_spanner(instance_id=instance,
+                         database_id=database,
+                         spanner_client=spanner_client)
+
     # This loop will run 1000 batches with 1000 entries each resulting in 1 million records
     # I am inserting records into two different instances because I am trying to validate performance afterwards.
     persons_batch = utility.generate_persons(size)
     print 'persons_batch record count : ' + str(len(persons_batch))
-
     start_time = time.time()
     # Insert into Persons table
-    utility.insert_data(instance_id=instance,
-                        database_id=database,
-                        spanner_client=spanner_client,
-                        table_id="Persons",
+    utility.insert_data(table_id="Persons",
                         columns=('person_id', 'update_timestamp', 'firstname', 'lastname', 'sibling_count'
                                  , 'child_count', 'height', 'weight', 'birthdate', 'account_creation_date',
                                  'given_names', 'is_active', 'profile_picture'),
@@ -30,10 +31,7 @@ def main(instance, database, size):
 
     start_time = time.time()
     # Insert into friends table
-    utility.insert_data(instance_id=instance,
-                        database_id=database,
-                        spanner_client=spanner_client,
-                        table_id="Friends",
+    utility.insert_data(table_id="Friends",
                         columns=('person_id', 'friend_id', 'status', 'connection_date'),
                         values=friends_batch)
     print 'Friends upload finished. Elapsed time : ' + str(time.time() - start_time)
@@ -43,10 +41,7 @@ def main(instance, database, size):
     print 'activities_batch record count : ' + str(len(activities_batch))
     start_time = time.time()
     # Insert into Activities table
-    utility.insert_data(instance_id=instance,
-                        database_id=database,
-                        spanner_client=spanner_client,
-                        table_id="Activities",
+    utility.insert_data(table_id="Activities",
                         columns=('person_id', 'activity_id', 'activity_type'),
                         values=activities_batch)
     print 'Activities upload finished. Elapsed time : ' + str(time.time() - start_time)
@@ -56,17 +51,13 @@ def main(instance, database, size):
     print 'posts_batch record count : ' + str(len(posts_batch))
     start_time = time.time()
     # Insert into Posts table
-    utility.insert_data(instance_id=instance,
-                        database_id=database,
-                        spanner_client=spanner_client,
-                        table_id="Posts",
+    utility.insert_data(table_id="Posts",
                         columns=('person_id', 'activity_id', 'post_id', 'post_content', 'post_timestamp'),
                         values=posts_batch)
     print 'Posts upload finished. Elapsed time : ' + str(time.time() - start_time)
 
     utility.create_key_files()
-    print 'Key files created'
-
+    print 'Primary Key files created for all tables'
     print 'End'
 
 
@@ -75,7 +66,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--instance', help='Spanner instance name', required=True)
     parser.add_argument('-d', '--database', help='Spanner database name', required=True)
-    parser.add_argument('-s', '--size', help='Size of sample records', required=True)
+    parser.add_argument('-s', '--size', help='Size of sample records for parent table Persons', required=True)
     args = parser.parse_args()
     print args
     print parser
