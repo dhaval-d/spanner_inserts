@@ -70,7 +70,12 @@ def main(instance, database, size):
     print 'End'
 
 
-# Start application
+'''
+This application expects three parameters from user. 
+Instance name
+Database name 
+Sample size - This refers to number of records in Persons table which is parent for other tables.
+'''
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--instance', help='Spanner instance name', required=True)
